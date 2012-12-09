@@ -320,7 +320,7 @@ class CADLOverdrive5: public CADL
 
 		if (ADL_OK == ADL_Overdrive5_FanSpeedInfo_Get(iAdapter, iTController, &fan))
 		{
-			printf("Fan Speed Range = %d - %d %% or %d - %d RPM, Flags = 0x%x\n",
+			printf("Fan Speed Range = %d - %d %% or %d - %d RPM, flags = 0x%x\n",
 				fan.iMinPercent, fan.iMaxPercent, fan.iMinRPM, fan.iMaxRPM, fan.iFlags);
 		}
 		else fprintf(stderr, "Error: cannot read Fan Speed Info.\n");
@@ -335,10 +335,10 @@ class CADLOverdrive5: public CADL
 		speed[1].iFlags = 0;
 
 		if (ADL_OK != ADL_Overdrive5_FanSpeed_Get(iAdapter, iTController, speed)
-		&& (ADL_OK != ADL_Overdrive5_FanSpeed_Get(iAdapter, iTController, speed+1)))
+		|| (ADL_OK != ADL_Overdrive5_FanSpeed_Get(iAdapter, iTController, speed+1)))
 			fprintf(stderr, "Error: cannot read Fan Speed.\n");
 
-		printf("Fan Speed = %d%% = %dRPM Flags = 0x%x,0x%x\n",
+		printf("Fan Speed = %d%% = %d RPM, flags = 0x%x,%x\n",
 			speed[0].iFanSpeed, speed[1].iFanSpeed, speed[0].iFlags, speed[1].iFlags);
 
 		while (seconds-->0)
@@ -346,13 +346,13 @@ class CADLOverdrive5: public CADL
 			Sleep(1000);
 
 			if (ADL_OK != ADL_Overdrive5_FanSpeed_Get(iAdapter, iTController, speed)
-			&& (ADL_OK != ADL_Overdrive5_FanSpeed_Get(iAdapter, iTController, speed+1)))
+			|| (ADL_OK != ADL_Overdrive5_FanSpeed_Get(iAdapter, iTController, speed+1)))
 			{
 				fprintf(stderr, "Error: cannot read Fan Speed.\n");
 				break;
 			}
 
-			printf("Fan Speed = %d%% = %dRPM Flags = 0x%x,0x%x\n",
+			printf("Fan Speed = %d%% = %d RPM, flags = 0x%x,%x\n",
 				speed[0].iFanSpeed, speed[1].iFanSpeed, speed[0].iFlags, speed[1].iFlags);
 		}
 	}
