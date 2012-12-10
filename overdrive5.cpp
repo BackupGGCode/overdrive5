@@ -120,7 +120,7 @@ class CADLOverdrive5: public CADL
 		else fprintf(stderr, "Error: cannot read Current Activity.\n");
 	}
 
-	void PrintPerformanceLevels(const int iAdapter)
+	void PrintPerformanceLevels(const int iAdapter, const int def)
 	{
 		ADLODParameters odp;
 
@@ -154,7 +154,7 @@ class CADLOverdrive5: public CADL
 			odlvl[0].iSize = sizeof(odlvl[0]) + 
 				sizeof(ADLODPerformanceLevel)*(odp.iNumberOfPerformanceLevels-1);
 
-			if (ADL_OK == ADL_Overdrive5_ODPerformanceLevels_Get(iAdapter, 0, odlvl))
+			if (ADL_OK == ADL_Overdrive5_ODPerformanceLevels_Get(iAdapter, def, odlvl))
 			{
 				for (int i = 0; i < odp.iNumberOfPerformanceLevels; i++)
 				{
@@ -217,6 +217,29 @@ class CADLOverdrive5: public CADL
 		else fprintf(stderr, "Error: cannot read Overdrive Parameters.\n");
 	}
 
+	void SetDefaultPerformanceLevels(const int iAdapter)
+	{
+		ADLODParameters odp;
+
+		odp.iSize = sizeof(odp);
+
+		if (ADL_OK == ADL_Overdrive5_ODParameters_Get(iAdapter, &odp))
+		{
+			ADLODPerformanceLevels odplvl[20];
+
+			odplvl[0].iSize = sizeof(odplvl[0]) + 
+				sizeof(ADLODPerformanceLevel)*(odp.iNumberOfPerformanceLevels-1);
+
+			if (ADL_OK == ADL_Overdrive5_ODPerformanceLevels_Get(iAdapter, 1, odplvl))
+			{
+				if (ADL_OK != ADL_Overdrive5_ODPerformanceLevels_Set(iAdapter, odplvl))
+					fprintf(stderr, "Error: cannot set Performance Levels.\n");
+			}
+			else fprintf(stderr, "Error: cannot read Performance Levels.\n");
+		}
+		else fprintf(stderr, "Error: cannot read Overdrive Parameters.\n");
+	}
+
 	void PrintPowerControl(const int iAdapter)
 	{
 		int supported;
@@ -268,6 +291,7 @@ class CADLOverdrive5: public CADL
 					if (ADL_OK != ADL_Overdrive5_PowerControl_Set(iAdapter, iPower))
 						fprintf(stderr, "Error: cannot set Power Control to %d.\n", iPower);
 				}
+				else fprintf(stderr, "Error: cannot get Power Control info.\n");
 			}
 			else fprintf(stderr, "Error: Power Control is not supported.\n");
 		}
@@ -285,10 +309,10 @@ class CADLOverdrive5: public CADL
 			if (ADL_OK == ADL_Adapter_Active_Get(iAdapter, &active))
 				printf("\tActive          = %s\n", YesNo(active));
 			if (ADL_OK == ADL_Adapter_ID_Get(iAdapter, &adapterID))
-				printf("\tAdapterID       = 0x%08X\n", adapterID);
+				printf("\tAdapter ID      = %08X\n", adapterID);
 
 			PrintCurrentActivity(iAdapter);
-			PrintPerformanceLevels(iAdapter);
+			PrintPerformanceLevels(iAdapter, 1);
 
 			for (int i = 0; ; i++)
 			{
@@ -439,9 +463,11 @@ public:
 			"	-g <n>			- monitor fan speed for <n> seconds\n"
 			"	-G			- set default fan speed\n"
 			"	-q			- get performance levels\n"
-			"	-Q			- get current activity\n"
+			"	-Q			- get default performance levels\n"
+			"	-A			- get current activity\n"
 			"	-p <clk/mem/vddc>	- add a performance level\n"
 			"	-P			- set the performance levels\n"
+			"	-D			- set default performance levels\n"
 			"	-t			- get the temperature\n"
 			"	-T <n>			- monitor the temperature for <n> seconds\n"
 			"	-w			- get power control info.\n"
@@ -470,7 +496,7 @@ public:
 		odplvl[0].iSize = 0;
 
 		// read command line
-		while ((opt = getopt(argc, argv, ":hla:c:fF:J:Gg:qQp:PtT:wW:v:")) != -1)
+		while ((opt = getopt(argc, argv, ":hla:c:fF:J:Gg:qQAp:PDtT:wW:v:")) != -1)
 		{
 			switch(opt) {
 			case 'h':
@@ -502,9 +528,12 @@ public:
 				SetDefaultFanSpeed(iAdapter, iTController);
 				break;
 			case 'q':
-				PrintPerformanceLevels(iAdapter);
+				PrintPerformanceLevels(iAdapter, 0);
 				break;
 			case 'Q':
+				PrintPerformanceLevels(iAdapter, 1);
+				break;
+			case 'A':
 				PrintCurrentActivity(iAdapter);
 				break;
 			case 'p':
@@ -512,6 +541,9 @@ public:
 				break;
 			case 'P':
 				SetPerformanceLevels(iAdapter, odplvl);
+				break;
+			case 'D':
+				SetDefaultPerformanceLevels(iAdapter);
 				break;
 			case 't':
 				PrintTemperature(iAdapter, iTController, 0);
