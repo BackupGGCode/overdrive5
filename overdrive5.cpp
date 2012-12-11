@@ -200,7 +200,7 @@ class CADLOverdrive5: public CADL
 			odlvl->aLevels[i].iMemoryClock = memclk*100;
 			odlvl->aLevels[i].iVddc = vddc*1000;
 		}
-		else fprintf(stderr, "Error: cannot parse Performance Level %.\n");
+		else fprintf(stderr, "Error: cannot parse Performance Level %s\n", str);
 	}
 
 	void SetPerformanceLevels(const int iAdapter, ADLODPerformanceLevels *odplvl)
@@ -215,6 +215,68 @@ class CADLOverdrive5: public CADL
 				fprintf(stderr, "Error: cannot set Performance Levels.\n");
 		}
 		else fprintf(stderr, "Error: cannot read Overdrive Parameters.\n");
+	}
+
+	void SetHighestPerformanceLevel(const int iAdapter, const char* str)
+	{
+		float engclk;
+		float memclk;
+		float vddc;
+
+		if (sscanf(str, "%f/%f/%f", &engclk, &memclk, &vddc) == 3)
+		{
+			ADLODParameters odp;
+
+			odp.iSize = sizeof(odp);
+
+			if (ADL_OK == ADL_Overdrive5_ODParameters_Get(iAdapter, &odp))
+			{
+				ADLODPerformanceLevels odplvl[20];
+
+				odplvl[0].iSize = sizeof(odplvl[0]) + 
+					sizeof(ADLODPerformanceLevel)*(odp.iNumberOfPerformanceLevels-1);
+
+				if (ADL_OK == ADL_Overdrive5_ODPerformanceLevels_Get(iAdapter, 0, odplvl))
+				{
+					int i = odp.iNumberOfPerformanceLevels-1;
+					int err = 0;
+
+					odplvl->aLevels[i].iEngineClock = engclk*100;
+					odplvl->aLevels[i].iMemoryClock = memclk*100;
+					odplvl->aLevels[i].iVddc = vddc*1000;
+
+					if (odplvl->aLevels[i].iEngineClock < odp.sEngineClock.iMin
+					||  odplvl->aLevels[i].iEngineClock > odp.sEngineClock.iMax)
+					{
+						fprintf(stderr, "Error: Engine Clock %.2f is out of range.\n", engclk);
+						err++;
+					}
+
+					if (odplvl->aLevels[i].iMemoryClock < odp.sMemoryClock.iMin
+					||  odplvl->aLevels[i].iMemoryClock > odp.sMemoryClock.iMax)
+					{
+						fprintf(stderr, "Error: Memory Clock %.2f is out of range.\n", memclk);
+						err++;
+					}
+
+					if (odplvl->aLevels[i].iVddc < odp.sVddc.iMin
+					||  odplvl->aLevels[i].iVddc > odp.sVddc.iMax)
+					{
+						fprintf(stderr, "Error: Memory Clock %.2f is out of range.\n", memclk);
+						err++;
+					}
+
+					if (!err)
+					{
+						if (ADL_OK != ADL_Overdrive5_ODPerformanceLevels_Set(iAdapter, odplvl))
+							fprintf(stderr, "Error: cannot set Performance Levels.\n");
+					}
+				}
+				else fprintf(stderr, "Error: cannot read Performance Levels.\n");
+			}
+			else fprintf(stderr, "Error: cannot read Overdrive Parameters.\n");
+		}
+		else fprintf(stderr, "Error: cannot parse Performance Level %s\n", str);
 	}
 
 	void SetDefaultPerformanceLevels(const int iAdapter)
@@ -450,7 +512,7 @@ class CADLOverdrive5: public CADL
 public:
 	void PrintUsage(const char* name)
 	{
-		printf("Overdrive5 v1.0 - ATI/AMD ADL OverDrive5 Tool\n");
+		printf("Overdrive5 v1.1 - ATI/AMD ADL OverDrive5 Tool\n");
 		printf("Usage: %s [options]\n", name);
 		printf("Options:\n"
 			"	-h			- help\n"
@@ -467,6 +529,7 @@ public:
 			"	-A			- get current activity\n"
 			"	-p <clk/mem/vddc>	- add a performance level\n"
 			"	-P			- set the performance levels\n"
+			"	-S <clk/mem/vddc>	- set the highest performance level\n"
 			"	-D			- set default performance levels\n"
 			"	-t			- get the temperature\n"
 			"	-T <n>			- monitor the temperature for <n> seconds\n"
@@ -496,7 +559,7 @@ public:
 		odplvl[0].iSize = 0;
 
 		// read command line
-		while ((opt = getopt(argc, argv, ":hla:c:fF:J:Gg:qQAp:PDtT:wW:v:")) != -1)
+		while ((opt = getopt(argc, argv, ":hla:c:fF:J:Gg:qQAp:PS:DtT:wW:v:")) != -1)
 		{
 			switch(opt) {
 			case 'h':
@@ -541,6 +604,9 @@ public:
 				break;
 			case 'P':
 				SetPerformanceLevels(iAdapter, odplvl);
+				break;
+			case 'S':
+				SetHighestPerformanceLevel(iAdapter, optarg);
 				break;
 			case 'D':
 				SetDefaultPerformanceLevels(iAdapter);
