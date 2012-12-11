@@ -4,6 +4,8 @@
 #include "adl_sdk.h"
 #include "cadl.hpp"
 
+#define ODPLVL_SIZE		20
+
 class CADLOverdrive5: public CADL
 {
 	static const char YesNoStr[2][4];
@@ -128,7 +130,7 @@ class CADLOverdrive5: public CADL
 
 		if (ADL_OK == ADL_Overdrive5_ODParameters_Get(iAdapter, &odp))
 		{
-			ADLODPerformanceLevels odlvl[20];
+			ADLODPerformanceLevels odlvl[ODPLVL_SIZE];
 
 			printf("Overdrive parameters:\n"
 				"\tNumber of Performance Levels = %d\n"
@@ -231,7 +233,7 @@ class CADLOverdrive5: public CADL
 
 			if (ADL_OK == ADL_Overdrive5_ODParameters_Get(iAdapter, &odp))
 			{
-				ADLODPerformanceLevels odplvl[20];
+				ADLODPerformanceLevels odplvl[ODPLVL_SIZE];
 
 				odplvl[0].iSize = sizeof(odplvl[0]) + 
 					sizeof(ADLODPerformanceLevel)*(odp.iNumberOfPerformanceLevels-1);
@@ -239,7 +241,6 @@ class CADLOverdrive5: public CADL
 				if (ADL_OK == ADL_Overdrive5_ODPerformanceLevels_Get(iAdapter, 0, odplvl))
 				{
 					int i = odp.iNumberOfPerformanceLevels-1;
-					int err = 0;
 
 					odplvl->aLevels[i].iEngineClock = engclk*100;
 					odplvl->aLevels[i].iMemoryClock = memclk*100;
@@ -247,30 +248,18 @@ class CADLOverdrive5: public CADL
 
 					if (odplvl->aLevels[i].iEngineClock < odp.sEngineClock.iMin
 					||  odplvl->aLevels[i].iEngineClock > odp.sEngineClock.iMax)
-					{
-						fprintf(stderr, "Error: Engine Clock %.2f is out of range.\n", engclk);
-						err++;
-					}
+						fprintf(stderr, "Warning: Engine Clock %.2f is out of range.\n", engclk);
 
 					if (odplvl->aLevels[i].iMemoryClock < odp.sMemoryClock.iMin
 					||  odplvl->aLevels[i].iMemoryClock > odp.sMemoryClock.iMax)
-					{
-						fprintf(stderr, "Error: Memory Clock %.2f is out of range.\n", memclk);
-						err++;
-					}
+						fprintf(stderr, "Warning: Memory Clock %.2f is out of range.\n", memclk);
 
 					if (odplvl->aLevels[i].iVddc < odp.sVddc.iMin
 					||  odplvl->aLevels[i].iVddc > odp.sVddc.iMax)
-					{
-						fprintf(stderr, "Error: Memory Clock %.2f is out of range.\n", memclk);
-						err++;
-					}
+						fprintf(stderr, "Warning: Memory Clock %.2f is out of range.\n", memclk);
 
-					if (!err)
-					{
-						if (ADL_OK != ADL_Overdrive5_ODPerformanceLevels_Set(iAdapter, odplvl))
-							fprintf(stderr, "Error: cannot set Performance Levels.\n");
-					}
+					if (ADL_OK != ADL_Overdrive5_ODPerformanceLevels_Set(iAdapter, odplvl))
+						fprintf(stderr, "Error: cannot set Performance Levels.\n");
 				}
 				else fprintf(stderr, "Error: cannot read Performance Levels.\n");
 			}
@@ -287,7 +276,7 @@ class CADLOverdrive5: public CADL
 
 		if (ADL_OK == ADL_Overdrive5_ODParameters_Get(iAdapter, &odp))
 		{
-			ADLODPerformanceLevels odplvl[20];
+			ADLODPerformanceLevels odplvl[ODPLVL_SIZE];
 
 			odplvl[0].iSize = sizeof(odplvl[0]) + 
 				sizeof(ADLODPerformanceLevel)*(odp.iNumberOfPerformanceLevels-1);
@@ -456,18 +445,12 @@ class CADLOverdrive5: public CADL
 			if (iSpeedType == ADL_DL_FANCTRL_SPEED_TYPE_PERCENT)
 			{
 				if (iSpeed < fan.iMinPercent || iSpeed > fan.iMaxPercent)
-				{
-					fprintf(stderr, "Error: speed %d%% out of range.\n", iSpeed);
-					return;
-				}
+					fprintf(stderr, "Warning: speed %d%% out of range.\n", iSpeed);
 			}
 			else
 			{
 				if (iSpeed < fan.iMinRPM || iSpeed > fan.iMaxRPM)
-				{
-					fprintf(stderr, "Error: speed %dRPM out of range.\n", iSpeed);
-					return;
-				}
+					fprintf(stderr, "Warning: speed %dRPM out of range.\n", iSpeed);
 			}
 
 			speed.iSpeedType = iSpeedType;
@@ -553,7 +536,7 @@ public:
 
 		int iAdapter = FindAdapter();
 		int iTController = FindTController(iAdapter);
-		ADLODPerformanceLevels odplvl[20];
+		ADLODPerformanceLevels odplvl[ODPLVL_SIZE];
 		char opt;
 
 		odplvl[0].iSize = 0;
