@@ -256,7 +256,7 @@ class CADLOverdrive5: public CADL
 
 					if (odplvl->aLevels[i].iVddc < odp.sVddc.iMin
 					||  odplvl->aLevels[i].iVddc > odp.sVddc.iMax)
-						fprintf(stderr, "Warning: Memory Clock %.2f is out of range.\n", memclk);
+						fprintf(stderr, "Warning: Vddc %.2f is out of range.\n", vddc);
 
 					if (ADL_OK != ADL_Overdrive5_ODPerformanceLevels_Set(iAdapter, odplvl))
 						fprintf(stderr, "Error: cannot set Performance Levels.\n");
@@ -445,12 +445,12 @@ class CADLOverdrive5: public CADL
 			if (iSpeedType == ADL_DL_FANCTRL_SPEED_TYPE_PERCENT)
 			{
 				if (iSpeed < fan.iMinPercent || iSpeed > fan.iMaxPercent)
-					fprintf(stderr, "Warning: speed %d%% out of range.\n", iSpeed);
+					fprintf(stderr, "Warning: speed %d%% is out of range.\n", iSpeed);
 			}
 			else
 			{
 				if (iSpeed < fan.iMinRPM || iSpeed > fan.iMaxRPM)
-					fprintf(stderr, "Warning: speed %dRPM out of range.\n", iSpeed);
+					fprintf(stderr, "Warning: speed %d RPM is out of range.\n", iSpeed);
 			}
 
 			speed.iSpeedType = iSpeedType;
