@@ -530,7 +530,7 @@ public:
 
 		if (!IsOK())
 		{
-			fprintf(stderr, "Cannot initialize ADL!\n");
+			fprintf(stderr, "Cannot initialize ADL! (%d)\n", LastError());
 			return -1;
 		}
 
