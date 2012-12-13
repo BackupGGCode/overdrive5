@@ -43,13 +43,13 @@ protected:
 
 public:
 
-	CADLCalls(): mHDLL(NULL)
+	CADLCalls(): Error(ADL_ERR_NOT_INIT), mHDLL(NULL)
 	{
 		for (int i = 0; i < E_ADL_CALLID_MAX; i++)
 			mProcAddress[i] = ADL_Call_Stub;
 	};
 
-	CADLCalls(const char* dll_name): mHDLL(NULL)
+	CADLCalls(const char* dll_name): Error(ADL_ERR_NOT_INIT), mHDLL(NULL)
 	{
 		for (int i = 0; i < E_ADL_CALLID_MAX; i++)
 			mProcAddress[i] = ADL_Call_Stub;
@@ -144,7 +144,7 @@ public:
 					mProcAddress[i] = addr;
 			}
 		}
-		else fprintf(stderr, "Error: cannot load %d.\n", dll_name);
+		//else fprintf(stderr, "Error: cannot load %d.\n", dll_name);
 
 		return IsOK();
 	}

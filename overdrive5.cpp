@@ -530,8 +530,15 @@ public:
 
 		if (!IsOK())
 		{
-			fprintf(stderr, "Cannot initialize ADL! (%d)\n", LastError());
-			return -1;
+			// check the 32 bit calling application on 64 bit OS case
+			Init("atiadlxy.dll");
+
+			if (!IsOK())
+			{
+				fprintf(stderr, "Cannot initialize ADL! (%d)\n", LastError());
+				return -1;
+			}
+			else fprintf(stderr, "The 32bit application on 64bit OS\n");
 		}
 
 		int iAdapter = FindAdapter();
