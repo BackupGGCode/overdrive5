@@ -256,7 +256,7 @@ class CADLOverdrive5: public CADL
 
 					if (odplvl->aLevels[i].iVddc < odp.sVddc.iMin
 					||  odplvl->aLevels[i].iVddc > odp.sVddc.iMax)
-						fprintf(stderr, "Warning: Vddc %.2f is out of range.\n", vddc);
+						fprintf(stderr, "Warning: Vddc %.3f is out of range.\n", vddc);
 
 					if (ADL_OK != ADL_Overdrive5_ODPerformanceLevels_Set(iAdapter, odplvl))
 						fprintf(stderr, "Error: cannot set Performance Levels.\n");

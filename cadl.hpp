@@ -97,6 +97,7 @@ public:
 					mProcAddress[i] = addr;
 			}
 		}
+		else fprintf(stderr, "Error: cannot load %d.\n", dll_name);
 
 		return IsOK();
 	}
@@ -253,23 +254,34 @@ public:
 	// init parent and some usefull structs
 	bool Init(const char *dll_name)
 	{
-		if (CADLCalls::Init(dll_name)
-			&& (ADL_OK == ADL_Main_Control_Create(ADL_Main_Memory_Alloc, 1))
-			&& (ADL_OK == ADL_Adapter_NumberOfAdapters_Get(&mNumberAdapters))
-			&& (mNumberAdapters))
+		if (CADLCalls::Init(dll_name))
 		{
-			mpAdapterInfo = new AdapterInfo[mNumberAdapters];
-
-			if (mpAdapterInfo)
+			if (ADL_OK == ADL_Main_Control_Create(ADL_Main_Memory_Alloc, 1))
 			{
-				memset(mpAdapterInfo, 0, sizeof(AdapterInfo)*mNumberAdapters);
-
-				// Get the AdapterInfo structure for all adapters in the system
-				if (ADL_OK == ADL_Adapter_AdapterInfo_Get(mpAdapterInfo, sizeof(AdapterInfo)*mNumberAdapters))
+				if (ADL_OK == ADL_Adapter_NumberOfAdapters_Get(&mNumberAdapters))
 				{
-					mOK = true;
+					if (mNumberAdapters)
+					{
+						mpAdapterInfo = new AdapterInfo[mNumberAdapters];
+
+						if (mpAdapterInfo)
+						{
+							memset(mpAdapterInfo, 0, sizeof(AdapterInfo)*mNumberAdapters);
+
+							// Get the AdapterInfo structure for all adapters in the system
+							if (ADL_OK == ADL_Adapter_AdapterInfo_Get(mpAdapterInfo, sizeof(AdapterInfo)*mNumberAdapters))
+							{
+								mOK = true;
+							}
+							else fprintf(stderr, "Error: cannot get adapter info.\n");
+						}
+						else fprintf(stderr, "Error: cannot allocate memory for adapters.\n");
+					}
+					else fprintf(stderr, "Error: no any adapters present.\n");
 				}
+				else fprintf(stderr, "Error: cannot get the number of adapters.\n");
 			}
+			else fprintf(stderr, "Error: cannot initialize ADL interface.\n");
 		}
 
 		return mOK;
