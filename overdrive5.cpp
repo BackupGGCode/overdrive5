@@ -1,6 +1,17 @@
-#include <windows.h>
+#if defined (LINUX)
+#	include <dlfcn.h>	//dyopen, dlsym, dlclose
+#	include <unistd.h>	//sleep
+#	include <memory.h>
+#	include <getopt.h>
+#	define ADL_DLL_NAME	"libatiadlxx.so"
+#else
+#	include <windows.h>
+#	include "wgetopt.h"
+#	define ADL_DLL_NAME	"atiadlxx.dll"
+#endif
+
+#include <stdlib.h>
 #include <stdio.h>
-#include "wgetopt.h"
 #include "adl_sdk.h"
 #include "cadl.hpp"
 
@@ -79,7 +90,6 @@ class CADLOverdrive5: public CADL
 			"\tVendor ID       = %d\n"
 			"\tAdapter name    = %s\n"
 			"\tPresent         = %s\n"
-			"\tOS DisplayIndex = %d\n"
 			,
 			pAdapterInfo->iAdapterIndex,
 			pAdapterInfo->iBusNumber,
@@ -87,8 +97,12 @@ class CADLOverdrive5: public CADL
 			pAdapterInfo->iFunctionNumber,
 			pAdapterInfo->iVendorID,
 			pAdapterInfo->strAdapterName,
-			YesNo(pAdapterInfo->iPresent),
+			YesNo(pAdapterInfo->iPresent));
+
+#		if !defined (LINUX)
+		printf("\tOS DisplayIndex = %d\n",
 			pAdapterInfo->iOSDisplayIndex);
+#		endif
 	}
 
 	void PrintCurrentActivity(const int iAdapter)
@@ -198,9 +212,9 @@ class CADLOverdrive5: public CADL
 				i = 0;
 			}
 
-			odlvl->aLevels[i].iEngineClock = engclk*100;
-			odlvl->aLevels[i].iMemoryClock = memclk*100;
-			odlvl->aLevels[i].iVddc = vddc*1000;
+			odlvl->aLevels[i].iEngineClock = (int) (engclk * 100);
+			odlvl->aLevels[i].iMemoryClock = (int) (memclk * 100);
+			odlvl->aLevels[i].iVddc = (int) (vddc * 1000);
 		}
 		else fprintf(stderr, "Error: cannot parse Performance Level %s\n", str);
 	}
@@ -242,9 +256,9 @@ class CADLOverdrive5: public CADL
 				{
 					int i = odp.iNumberOfPerformanceLevels-1;
 
-					odplvl->aLevels[i].iEngineClock = engclk*100;
-					odplvl->aLevels[i].iMemoryClock = memclk*100;
-					odplvl->aLevels[i].iVddc = vddc*1000;
+					odplvl->aLevels[i].iEngineClock = (int) (engclk * 100);
+					odplvl->aLevels[i].iMemoryClock = (int) (memclk * 100);
+					odplvl->aLevels[i].iVddc = (int) (vddc * 1000);
 
 					if (odplvl->aLevels[i].iEngineClock < odp.sEngineClock.iMin
 					||  odplvl->aLevels[i].iEngineClock > odp.sEngineClock.iMax)
@@ -492,6 +506,13 @@ class CADLOverdrive5: public CADL
 		}
 	}
 
+#	if defined (LINUX)
+	void Sleep(const int ms)
+	{
+		usleep(ms*1000);
+	}
+#	endif
+
 public:
 	void PrintUsage(const char* name)
 	{
@@ -526,12 +547,14 @@ public:
 	{
 		Verbose = 1;
 
-		Init("atiadlxx.dll");
+		Init(ADL_DLL_NAME);
 
 		if (!IsOK())
 		{
-			// check the 32 bit calling application on 64 bit OS case
+#			if !defined (LINUX)
+			// check the 32 bit calling application on 64 bit Windows case
 			Init("atiadlxy.dll");
+#			endif
 
 			if (!IsOK())
 			{

@@ -4,6 +4,10 @@
 // Class for ADL interface
 class CADLCalls
 {
+#	if defined (LINUX)
+	typedef void* HINSTANCE;
+#	endif
+
 	enum CallID
 	{
 		E_ADL_Main_Control_Create,
@@ -46,13 +50,13 @@ public:
 	CADLCalls(): Error(ADL_ERR_NOT_INIT), mHDLL(NULL)
 	{
 		for (int i = 0; i < E_ADL_CALLID_MAX; i++)
-			mProcAddress[i] = ADL_Call_Stub;
+			mProcAddress[i] = (void*) ADL_Call_Stub;
 	};
 
 	CADLCalls(const char* dll_name): Error(ADL_ERR_NOT_INIT), mHDLL(NULL)
 	{
 		for (int i = 0; i < E_ADL_CALLID_MAX; i++)
-			mProcAddress[i] = ADL_Call_Stub;
+			mProcAddress[i] = (void*) ADL_Call_Stub;
 
 		Init(dll_name);
 	};
@@ -144,125 +148,142 @@ public:
 					mProcAddress[i] = addr;
 			}
 		}
-		//else fprintf(stderr, "Error: cannot load %d.\n", dll_name);
+		//else fprintf(stderr, "Error: cannot load %s.\n", dll_name);
 
 		return IsOK();
 	}
+
+#	if defined (LINUX)
+	HINSTANCE LoadLibrary(const char* dll_name)
+	{
+		return dlopen(dll_name, RTLD_LAZY|RTLD_GLOBAL);
+	}
+
+	void FreeLibrary(HINSTANCE dll)
+	{
+		dlclose(dll);
+	}
+
+	void* GetProcAddress(HINSTANCE dll, const char* call_name)
+	{
+		return dlsym(dll, call_name);
+	}
+#	endif
 
 	// ------------------------ wrappers for DLL calls ------------------------
 
 	int ADL_Main_Control_Create(ADL_MAIN_MALLOC_CALLBACK callback, int iEnumConnectedAdapters)
 	{
-		return Error = (static_cast <int (*)(ADL_MAIN_MALLOC_CALLBACK, int)> (mProcAddress[E_ADL_Main_Control_Create]))
+		return Error = ((int (*)(ADL_MAIN_MALLOC_CALLBACK, int)) (mProcAddress[E_ADL_Main_Control_Create]))
 			(callback, iEnumConnectedAdapters);
 	};
 	
 	int ADL_Main_Control_Destroy()
 	{
-		return Error = (static_cast <int (*)()> (mProcAddress[E_ADL_Main_Control_Destroy]))
+		return Error = ((int (*)()) (mProcAddress[E_ADL_Main_Control_Destroy]))
 			();
 	};
 
 	int ADL_Adapter_Active_Get(int iAdapterIndex, int *lpStatus)
 	{
-		return Error = (static_cast <int (*)(int,int*)> (mProcAddress[E_ADL_Adapter_Active_Get]))
+		return Error = ((int (*)(int,int*)) (mProcAddress[E_ADL_Adapter_Active_Get]))
 			(iAdapterIndex, lpStatus);
 	}
 
 	int ADL_Adapter_NumberOfAdapters_Get(int *lpNumAdapters)
 	{
-		return Error = (static_cast <int (*)(int*)> (mProcAddress[E_ADL_Adapter_NumberOfAdapters_Get]))
+		return Error = ((int (*)(int*)) (mProcAddress[E_ADL_Adapter_NumberOfAdapters_Get]))
 			(lpNumAdapters);
 	}
 
 	int ADL_Adapter_AdapterInfo_Get(LPAdapterInfo lpInfo, int iInputSize)
 	{
-		return Error = (static_cast <int (*)(LPAdapterInfo, int)> (mProcAddress[E_ADL_Adapter_AdapterInfo_Get]))
+		return Error = ((int (*)(LPAdapterInfo, int)) (mProcAddress[E_ADL_Adapter_AdapterInfo_Get]))
 			(lpInfo, iInputSize);
 	}
 
 	int ADL_Adapter_ID_Get(int iAdapterIndex, int *lpAdapterID)
 	{
-		return Error = (static_cast <int (*)(int,int*)> (mProcAddress[E_ADL_Adapter_ID_Get]))
+		return Error = ((int (*)(int,int*)) (mProcAddress[E_ADL_Adapter_ID_Get]))
 			(iAdapterIndex, lpAdapterID);
 	}
 	
 	// Overdrive 5 API
 	int ADL_Overdrive5_CurrentActivity_Get(int iAdapterIndex, ADLPMActivity *lpActivity)
 	{
-		return Error = (static_cast <int (*)(int,ADLPMActivity*)> (mProcAddress[E_ADL_Overdrive5_CurrentActivity_Get]))
+		return Error = ((int (*)(int,ADLPMActivity*)) (mProcAddress[E_ADL_Overdrive5_CurrentActivity_Get]))
 			(iAdapterIndex, lpActivity);
 	}
 
 	int ADL_Overdrive5_ThermalDevices_Enum(int iAdapterIndex, int iThermalControllerIndex, ADLThermalControllerInfo *lpThermalControllerInfo)
 	{
-		return Error = (static_cast <int (*)(int,int,ADLThermalControllerInfo*)> (mProcAddress[E_ADL_Overdrive5_ThermalDevices_Enum]))
+		return Error = ((int (*)(int,int,ADLThermalControllerInfo*)) (mProcAddress[E_ADL_Overdrive5_ThermalDevices_Enum]))
 			(iAdapterIndex, iThermalControllerIndex, lpThermalControllerInfo);
 	}
 
 	int ADL_Overdrive5_Temperature_Get(int iAdapterIndex, int iThermalControllerIndex, ADLTemperature *lpTemperature)
 	{
-		return Error = (static_cast <int (*)(int,int,ADLTemperature*)> (mProcAddress[E_ADL_Overdrive5_Temperature_Get]))
+		return Error = ((int (*)(int,int,ADLTemperature*)) (mProcAddress[E_ADL_Overdrive5_Temperature_Get]))
 			(iAdapterIndex, iThermalControllerIndex, lpTemperature);
 	}
 
 	int ADL_Overdrive5_FanSpeedInfo_Get(int iAdapterIndex, int iThermalControllerIndex, ADLFanSpeedInfo *lpFanSpeedInfo)
 	{
-		return Error = (static_cast <int (*)(int,int,ADLFanSpeedInfo*)> (mProcAddress[E_ADL_Overdrive5_FanSpeedInfo_Get]))
+		return Error = ((int (*)(int,int,ADLFanSpeedInfo*)) (mProcAddress[E_ADL_Overdrive5_FanSpeedInfo_Get]))
 			(iAdapterIndex, iThermalControllerIndex, lpFanSpeedInfo);
 	}
 
 	int ADL_Overdrive5_FanSpeed_Get(int iAdapterIndex, int iThermalControllerIndex, ADLFanSpeedValue *lpFanSpeedValue)
 	{
-		return Error = (static_cast <int (*)(int,int,ADLFanSpeedValue*)> (mProcAddress[E_ADL_Overdrive5_FanSpeed_Get]))
+		return Error = ((int (*)(int,int,ADLFanSpeedValue*)) (mProcAddress[E_ADL_Overdrive5_FanSpeed_Get]))
 			(iAdapterIndex, iThermalControllerIndex, lpFanSpeedValue);
 	}
 
 	int ADL_Overdrive5_FanSpeed_Set(int iAdapterIndex, int iThermalControllerIndex, ADLFanSpeedValue *lpFanSpeedValue)
 	{
-		return Error = (static_cast <int (*)(int,int,ADLFanSpeedValue*)> (mProcAddress[E_ADL_Overdrive5_FanSpeed_Set]))
+		return Error = ((int (*)(int,int,ADLFanSpeedValue*)) (mProcAddress[E_ADL_Overdrive5_FanSpeed_Set]))
 			(iAdapterIndex, iThermalControllerIndex, lpFanSpeedValue);
 	}
 
 	int ADL_Overdrive5_FanSpeedToDefault_Set(int iAdapterIndex, int iThermalControllerIndex)
 	{
-		return Error = (static_cast <int (*)(int,int)> (mProcAddress[E_ADL_Overdrive5_FanSpeedToDefault_Set]))
+		return Error = ((int (*)(int,int)) (mProcAddress[E_ADL_Overdrive5_FanSpeedToDefault_Set]))
 			(iAdapterIndex, iThermalControllerIndex);
 	}
 	int ADL_Overdrive5_ODParameters_Get(int iAdapterIndex, ADLODParameters *lpOdParameters)
 	{
-		return Error = (static_cast <int (*)(int,ADLODParameters*)> (mProcAddress[E_ADL_Overdrive5_ODParameters_Get]))
+		return Error = ((int (*)(int,ADLODParameters*)) (mProcAddress[E_ADL_Overdrive5_ODParameters_Get]))
 			(iAdapterIndex, lpOdParameters);
 	}
 	int ADL_Overdrive5_ODPerformanceLevels_Get(int iAdapterIndex, int iDefault, ADLODPerformanceLevels *lpOdPerformanceLevels)
 	{
-		return Error = (static_cast <int (*)(int,int,ADLODPerformanceLevels*)> (mProcAddress[E_ADL_Overdrive5_ODPerformanceLevels_Get]))
+		return Error = ((int (*)(int,int,ADLODPerformanceLevels*)) (mProcAddress[E_ADL_Overdrive5_ODPerformanceLevels_Get]))
 			(iAdapterIndex, iDefault, lpOdPerformanceLevels);
 	}
 	int ADL_Overdrive5_ODPerformanceLevels_Set(int iAdapterIndex, ADLODPerformanceLevels *lpOdPerformanceLevels)
 	{
-		return Error = (static_cast <int (*)(int,ADLODPerformanceLevels*)> (mProcAddress[E_ADL_Overdrive5_ODPerformanceLevels_Set]))
+		return Error = ((int (*)(int,ADLODPerformanceLevels*)) (mProcAddress[E_ADL_Overdrive5_ODPerformanceLevels_Set]))
 			(iAdapterIndex, lpOdPerformanceLevels);
 	}
 
 	int ADL_Overdrive5_PowerControl_Caps(int iAdapterIndex, int *lpSupported)
 	{
-		return Error = (static_cast <int (*)(int,int*)> (mProcAddress[E_ADL_Overdrive5_PowerControl_Caps]))
+		return Error = ((int (*)(int,int*)) (mProcAddress[E_ADL_Overdrive5_PowerControl_Caps]))
 			(iAdapterIndex, lpSupported);
 	}
 	int ADL_Overdrive5_PowerControlInfo_Get(int iAdapterIndex, ADLPowerControlInfo *lpPowerControlInfo)
 	{
-		return Error = (static_cast <int (*)(int,ADLPowerControlInfo*)> (mProcAddress[E_ADL_Overdrive5_PowerControlInfo_Get]))
+		return Error = ((int (*)(int,ADLPowerControlInfo*)) (mProcAddress[E_ADL_Overdrive5_PowerControlInfo_Get]))
 			(iAdapterIndex, lpPowerControlInfo);
 	}
 	int ADL_Overdrive5_PowerControl_Get(int iAdapterIndex, int *lpCurrentValue, int *lpDefaultValue)
 	{
-		return Error = (static_cast <int (*)(int,int*,int*)> (mProcAddress[E_ADL_Overdrive5_PowerControl_Get]))
+		return Error = ((int (*)(int,int*,int*)) (mProcAddress[E_ADL_Overdrive5_PowerControl_Get]))
 			(iAdapterIndex, lpCurrentValue, lpDefaultValue);
 	}
 	int ADL_Overdrive5_PowerControl_Set(int iAdapterIndex, int iValue)
 	{
-		return Error = (static_cast <int (*)(int,int)> (mProcAddress[E_ADL_Overdrive5_PowerControl_Set]))
+		return Error = ((int (*)(int,int)) (mProcAddress[E_ADL_Overdrive5_PowerControl_Set]))
 			(iAdapterIndex, iValue);
 	}
 };
